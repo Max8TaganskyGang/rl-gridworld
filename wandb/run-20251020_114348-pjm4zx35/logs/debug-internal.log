@@ -1,0 +1,13 @@
+{"time":"2025-10-20T11:43:48.338437+03:00","level":"INFO","msg":"stream: starting","core version":"0.22.2"}
+{"time":"2025-10-20T11:43:48.350774+03:00","level":"ERROR","msg":"monitor: failed to initialize GPU resource: monitor: could not start GPU binary: fork/exec /opt/anaconda3/lib/python3.12/site-packages/wandb/bin/gpu_stats: bad CPU type in executable"}
+{"time":"2025-10-20T11:43:48.933257+03:00","level":"INFO","msg":"stream: created new stream","id":"pjm4zx35"}
+{"time":"2025-10-20T11:43:48.933371+03:00","level":"INFO","msg":"handler: started","stream_id":"pjm4zx35"}
+{"time":"2025-10-20T11:43:48.933843+03:00","level":"INFO","msg":"stream: started","id":"pjm4zx35"}
+{"time":"2025-10-20T11:43:48.933888+03:00","level":"INFO","msg":"writer: started","stream_id":"pjm4zx35"}
+{"time":"2025-10-20T11:43:48.933923+03:00","level":"INFO","msg":"sender: started","stream_id":"pjm4zx35"}
+{"time":"2025-10-20T11:43:51.001988+03:00","level":"INFO","msg":"handler: operation stats","stats":{"operations":[{"desc":"updating run metadata","runtime_seconds":1.768440032}],"total_operations":1}}
+{"time":"2025-10-20T11:43:52.083611+03:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-10-20T11:43:52.834587+03:00","level":"INFO","msg":"stream: closing","id":"pjm4zx35"}
+{"time":"2025-10-20T11:43:52.834611+03:00","level":"INFO","msg":"handler: closed","stream_id":"pjm4zx35"}
+{"time":"2025-10-20T11:43:52.834798+03:00","level":"INFO","msg":"sender: closed","stream_id":"pjm4zx35"}
+{"time":"2025-10-20T11:43:52.834819+03:00","level":"INFO","msg":"stream: closed","id":"pjm4zx35"}

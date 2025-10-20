@@ -1,0 +1,36 @@
+{
+  "os":  "macOS-14.6.1-x86_64-i386-64bit",
+  "python":  "CPython 3.12.2",
+  "startedAt":  "2025-10-20T08:43:48.033840Z",
+  "args":  [
+    "ppo",
+    "--env-id",
+    "2",
+    "--total-steps",
+    "2000",
+    "--wandb"
+  ],
+  "program":  "/Users/makssinitskiy/rl_gridworld/train.py",
+  "codePath":  "train.py",
+  "codePathLocal":  "train.py",
+  "git":  {
+    "remote":  "https://github.com/Max8TaganskyGang/rl-gridworld.git",
+    "commit":  "81645cd52fd18446a9039593c6adbaf969e4c9c3"
+  },
+  "email":  "sinitskii.mi@phystech.edu",
+  "root":  "/Users/makssinitskiy/rl_gridworld",
+  "host":  "MacBook-Pro-Maksim.local",
+  "executable":  "/opt/anaconda3/bin/python",
+  "cpu_count":  4,
+  "cpu_count_logical":  8,
+  "disk":  {
+    "/":  {
+      "total":  "499963174912",
+      "used":  "468513951744"
+    }
+  },
+  "memory":  {
+    "total":  "17179869184"
+  },
+  "writerId":  "8t9hxgqtun5qtmsehrjtx4u28yqr40zu"
+}

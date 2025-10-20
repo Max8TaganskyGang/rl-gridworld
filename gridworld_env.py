@@ -30,6 +30,11 @@ class GridWorldEnv(gym.Env):
         render_mode: Optional[str] = None,
         floor_colors: Optional[np.ndarray] = None,
         seed: Optional[int] = None,
+        # Reward parameters
+        goal_reward: float = 10.0,
+        step_penalty: float = -0.01,
+        collision_penalty: float = -0.1,
+        distance_reward_scale: float = 0.1,
     ):
         """
         Initialize GridWorld environment.
@@ -57,6 +62,12 @@ class GridWorldEnv(gym.Env):
         self.see_obstacle = see_obstacle
         self.max_steps = max_steps
         self.render_mode = render_mode
+        
+        # Reward parameters
+        self.goal_reward = goal_reward
+        self.step_penalty = step_penalty
+        self.collision_penalty = collision_penalty
+        self.distance_reward_scale = distance_reward_scale
         
         # Set up random number generator
         self.np_random = np.random.RandomState(seed)
@@ -195,8 +206,27 @@ class GridWorldEnv(gym.Env):
         
         # Check if reached goal
         if self.current_pos == self.pos_goal:
-            reward = 1.0
+            reward = self.goal_reward  # Large positive reward for reaching goal
             terminated = True
+        else:
+            # Distance-based reward (closer to goal = higher reward)
+            goal_row, goal_col = self.pos_goal
+            current_row, current_col = self.current_pos
+            distance_to_goal = abs(current_row - goal_row) + abs(current_col - goal_col)
+            max_distance = self.height + self.width - 2  # Manhattan distance from corner to corner
+            
+            # Normalized distance reward (closer = higher)
+            distance_reward = (max_distance - distance_to_goal) / max_distance * self.distance_reward_scale
+            
+            # Small penalty for each step to encourage efficiency
+            step_penalty = self.step_penalty
+            
+            # Penalty for hitting obstacles/walls
+            collision_penalty = 0.0
+            if not self._is_valid_position(new_pos):
+                collision_penalty = self.collision_penalty
+            
+            reward = distance_reward + step_penalty + collision_penalty
         
         # Check if max steps reached
         self.step_count += 1
@@ -223,7 +253,7 @@ class GridWorldEnv(gym.Env):
         fig, ax = plt.subplots(figsize=(8, 8))
         
         # Create color map
-        colors = ['white'] * self.n_colors + ['green', 'black', 'red']
+        colors = ['white'] * self.n_colors + ['green', 'red', 'black']  # target, wall, obstacle
         cmap = ListedColormap(colors)
         
         # Create grid visualization
@@ -232,19 +262,29 @@ class GridWorldEnv(gym.Env):
         for i in range(self.height):
             for j in range(self.width):
                 if (i, j) == self.pos_goal:
-                    grid[i, j] = self.n_colors  # target
+                    grid[i, j] = self.n_colors  # target (green)
                 elif self.obstacle_mask[i, j]:
-                    grid[i, j] = self.n_colors + 2  # obstacle
+                    grid[i, j] = self.n_colors + 2  # obstacle (black)
                 else:
                     grid[i, j] = self.floor_colors[i, j]
         
         # Display grid
         im = ax.imshow(grid, cmap=cmap, vmin=0, vmax=self.n_colors + 2)
         
-        # Add agent position
+        # Add agent position (always visible)
         if self.current_pos is not None:
             agent_row, agent_col = self.current_pos
-            ax.add_patch(patches.Circle((agent_col, agent_row), 0.3, color='blue'))
+            # Make agent more visible with a larger circle and border
+            ax.add_patch(patches.Circle((agent_col, agent_row), 0.4, color='blue', zorder=10))
+            ax.add_patch(patches.Circle((agent_col, agent_row), 0.3, color='lightblue', zorder=11))
+        
+        # Add goal marker
+        goal_row, goal_col = self.pos_goal
+        ax.add_patch(patches.Circle((goal_col, goal_row), 0.3, color='green', zorder=10))
+        
+        # Add start marker
+        start_row, start_col = (0, 0)
+        ax.add_patch(patches.Circle((start_col, start_row), 0.2, color='orange', zorder=10))
         
         # Add grid lines
         ax.set_xticks(np.arange(-0.5, self.width, 1), minor=True)
@@ -262,7 +302,7 @@ class GridWorldEnv(gym.Env):
         """Render environment as RGB array."""
         fig, ax = plt.subplots(figsize=(6, 6))
         
-        colors = ['white'] * self.n_colors + ['green', 'black', 'red']
+        colors = ['white'] * self.n_colors + ['green', 'red', 'black']  # target, wall, obstacle
         cmap = ListedColormap(colors)
         
         grid = np.zeros((self.height, self.width))
@@ -278,9 +318,19 @@ class GridWorldEnv(gym.Env):
         
         ax.imshow(grid, cmap=cmap, vmin=0, vmax=self.n_colors + 2)
         
+        # Add agent position (always visible)
         if self.current_pos is not None:
             agent_row, agent_col = self.current_pos
-            ax.add_patch(patches.Circle((agent_col, agent_row), 0.3, color='blue'))
+            ax.add_patch(patches.Circle((agent_col, agent_row), 0.4, color='blue', zorder=10))
+            ax.add_patch(patches.Circle((agent_col, agent_row), 0.3, color='lightblue', zorder=11))
+        
+        # Add goal marker
+        goal_row, goal_col = self.pos_goal
+        ax.add_patch(patches.Circle((goal_col, goal_row), 0.3, color='green', zorder=10))
+        
+        # Add start marker
+        start_row, start_col = (0, 0)
+        ax.add_patch(patches.Circle((start_col, start_row), 0.2, color='orange', zorder=10))
         
         ax.set_xticks([])
         ax.set_yticks([])
@@ -299,19 +349,30 @@ class GridWorldEnv(gym.Env):
 
 def create_random_obstacle_mask(height: int, width: int, obstacle_prob: float = 0.1, seed: Optional[int] = None) -> np.ndarray:
     """
-    Create a random obstacle mask.
+    Create a random obstacle mask with exactly the specified percentage of obstacles.
     
     Args:
         height: Height of the grid
         width: Width of the grid
-        obstacle_prob: Probability of each cell being an obstacle
+        obstacle_prob: Fraction of cells that should be obstacles (0.0 to 1.0)
         seed: Random seed
     
     Returns:
         Binary mask where True indicates obstacle
     """
     rng = np.random.RandomState(seed)
-    mask = rng.random((height, width)) < obstacle_prob
+    
+    # Create flat array of all positions
+    total_cells = height * width
+    num_obstacles = int(total_cells * obstacle_prob)
+    
+    # Create mask with exactly num_obstacles obstacles
+    mask_flat = np.zeros(total_cells, dtype=bool)
+    obstacle_indices = rng.choice(total_cells, size=num_obstacles, replace=False)
+    mask_flat[obstacle_indices] = True
+    
+    # Reshape to grid
+    mask = mask_flat.reshape(height, width)
     
     # Ensure goal and start positions are not obstacles
     mask[0, 0] = False  # Start position

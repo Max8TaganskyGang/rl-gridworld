@@ -1,0 +1,1 @@
+{"_wandb":{"runtime":4},"_timestamp":1.760949649406533e+09,"steps":50,"episode":40,"success_rate_10":0.7,"epsilon":0.05,"avg_loss_10":0.012179560903787868,"episode_reward":0,"episode_loss":0.014978916893014685,"_step":4,"avg_reward_10":0.7,"_runtime":4,"buffer_size":1315}

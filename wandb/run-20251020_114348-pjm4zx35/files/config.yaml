@@ -1,0 +1,81 @@
+_wandb:
+    value:
+        cli_version: 0.22.2
+        e:
+            8t9hxgqtun5qtmsehrjtx4u28yqr40zu:
+                args:
+                    - ppo
+                    - --env-id
+                    - "2"
+                    - --total-steps
+                    - "2000"
+                    - --wandb
+                codePath: train.py
+                codePathLocal: train.py
+                cpu_count: 4
+                cpu_count_logical: 8
+                disk:
+                    /:
+                        total: "499963174912"
+                        used: "468513951744"
+                email: sinitskii.mi@phystech.edu
+                executable: /opt/anaconda3/bin/python
+                git:
+                    commit: 81645cd52fd18446a9039593c6adbaf969e4c9c3
+                    remote: https://github.com/Max8TaganskyGang/rl-gridworld.git
+                host: MacBook-Pro-Maksim.local
+                memory:
+                    total: "17179869184"
+                os: macOS-14.6.1-x86_64-i386-64bit
+                program: /Users/makssinitskiy/rl_gridworld/train.py
+                python: CPython 3.12.2
+                root: /Users/makssinitskiy/rl_gridworld
+                startedAt: "2025-10-20T08:43:48.033840Z"
+                writerId: 8t9hxgqtun5qtmsehrjtx4u28yqr40zu
+        m: []
+        python_version: 3.12.2
+        t:
+            "1":
+                - 1
+                - 11
+                - 49
+            "2":
+                - 1
+                - 11
+                - 49
+            "3":
+                - 2
+                - 16
+            "4": 3.12.2
+            "5": 0.22.2
+            "6": 4.51.3
+            "12": 0.22.2
+            "13": darwin-x86_64
+algorithm:
+    value: PPO
+clip_range:
+    value: 0.2
+entropy_coef:
+    value: 0.01
+env_size:
+    value: 5x5
+gae_lambda:
+    value: 0.95
+gamma:
+    value: 0.99
+learning_rate:
+    value: 0.0003
+minibatch_size:
+    value: 64
+n_colors:
+    value: 5
+obstacles:
+    value: 0
+rollout_len:
+    value: 256
+total_steps:
+    value: 2000
+update_epochs:
+    value: 4
+value_coef:
+    value: 0.5

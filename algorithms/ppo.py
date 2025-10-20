@@ -4,6 +4,7 @@ import torch.optim as optim
 import numpy as np
 from dataclasses import dataclass
 from typing import Tuple
+import wandb
 
 
 class ActorCritic(nn.Module):
@@ -163,14 +164,59 @@ def compute_gae(rewards, values, dones, gamma: float, lam: float):
 	return advantages, returns
 
 
-def train_ppo(env, agent: PPOAgent, total_steps: int = 10_000, rollout_len: int = 256):
+def train_ppo(env, agent: PPOAgent, total_steps: int = 10_000, rollout_len: int = 256,
+              use_wandb: bool = True, project_name: str = "rl-gridworld-ppo"):
+	"""Training loop with wandb logging."""
+	
+	if use_wandb:
+		wandb.init(
+			project=project_name,
+			config={
+				"algorithm": "PPO",
+				"total_steps": total_steps,
+				"rollout_len": rollout_len,
+				"learning_rate": agent.cfg.learning_rate,
+				"gamma": agent.cfg.gamma,
+				"gae_lambda": agent.cfg.gae_lambda,
+				"clip_range": agent.cfg.clip_range,
+				"entropy_coef": agent.cfg.entropy_coef,
+				"value_coef": agent.cfg.value_coef,
+				"update_epochs": agent.cfg.update_epochs,
+				"minibatch_size": agent.cfg.minibatch_size,
+				"env_size": f"{env.height}x{env.width}",
+				"n_colors": env.n_colors,
+				"obstacles": env.obstacle_mask.sum()
+			}
+		)
+	
 	rewards_per_rollout: list[float] = []
 	steps = 0
-	state, _ = env.reset()
+	rollout_count = 0
+	
 	while steps < total_steps:
 		obs, actions, logp, rewards, values, dones = rollout_trajectory(env, agent, steps=min(rollout_len, total_steps - steps))
 		advantages, returns = compute_gae(rewards, values, dones, agent.cfg.gamma, agent.cfg.gae_lambda)
 		stats = agent.update((obs, actions, logp, returns, advantages, values))
-		rewards_per_rollout.append(float(np.sum(rewards)))
+		
+		rollout_reward = float(np.sum(rewards))
+		rewards_per_rollout.append(rollout_reward)
 		steps += len(rewards)
+		rollout_count += 1
+		
+		# Log to wandb every rollout
+		if use_wandb:
+			wandb.log({
+				"rollout": rollout_count,
+				"total_steps": steps,
+				"rollout_reward": rollout_reward,
+				"rollout_length": len(rewards),
+				"policy_loss": stats["policy_loss"],
+				"value_loss": stats["value_loss"],
+				"entropy": stats["entropy"],
+				"avg_reward": np.mean(rewards_per_rollout[-10:]) if len(rewards_per_rollout) >= 10 else np.mean(rewards_per_rollout)
+			})
+	
+	if use_wandb:
+		wandb.finish()
+	
 	return rewards_per_rollout

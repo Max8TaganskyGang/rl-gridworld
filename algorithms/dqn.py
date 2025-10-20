@@ -6,6 +6,7 @@ import numpy as np
 import random
 from collections import deque
 from typing import Tuple, List
+import wandb
 
 
 class DQN(nn.Module):
@@ -124,24 +125,74 @@ class DQNAgent:
 		return float(loss.item())
 
 
-def train_dqn(env, agent: DQNAgent, episodes: int = 500, max_steps: int = 100) -> tuple[list[float], list[float]]:
-	"""Simple training loop returning per-episode rewards and mean losses."""
+def train_dqn(env, agent: DQNAgent, episodes: int = 500, max_steps: int = 100, 
+              use_wandb: bool = True, project_name: str = "rl-gridworld-dqn") -> tuple[list[float], list[float]]:
+	"""Training loop with wandb logging."""
+	
+	if use_wandb:
+		wandb.init(
+			project=project_name,
+			config={
+				"algorithm": "DQN",
+				"episodes": episodes,
+				"max_steps": max_steps,
+				"learning_rate": agent.optimizer.param_groups[0]['lr'],
+				"gamma": agent.gamma,
+				"epsilon_start": agent.epsilon,
+				"batch_size": agent.batch_size,
+				"buffer_size": len(agent.memory.buffer),
+				"env_size": f"{env.height}x{env.width}",
+				"n_colors": env.n_colors,
+				"obstacles": env.obstacle_mask.sum()
+			}
+		)
+	
 	rewards: list[float] = []
 	losses: list[float] = []
-	for _ in range(episodes):
+	successes: list[bool] = []
+	
+	for episode in range(episodes):
 		state, _ = env.reset()
 		episode_reward = 0.0
 		acc_loss = 0.0
-		for _ in range(max_steps):
+		steps = 0
+		
+		for step in range(max_steps):
 			action = agent.act(state, explore=True)
 			next_state, reward, terminated, truncated, _ = env.step(action)
 			done = terminated or truncated
 			agent.remember(state, action, reward, next_state, done)
-			acc_loss += agent.train_step()
+			loss = agent.train_step()
+			acc_loss += loss
 			episode_reward += reward
 			state = next_state
+			steps += 1
 			if done:
 				break
+		
 		rewards.append(episode_reward)
-		losses.append(acc_loss / max(1, agent.batch_size))
+		losses.append(acc_loss / max(steps, 1))
+		successes.append(episode_reward > 0)
+		
+		# Log to wandb every 10 episodes
+		if use_wandb and episode % 10 == 0:
+			avg_reward = np.mean(rewards[-10:]) if len(rewards) >= 10 else np.mean(rewards)
+			avg_loss = np.mean(losses[-10:]) if len(losses) >= 10 else np.mean(losses)
+			success_rate = np.mean(successes[-10:]) if len(successes) >= 10 else np.mean(successes)
+			
+			wandb.log({
+				"episode": episode,
+				"episode_reward": episode_reward,
+				"avg_reward_10": avg_reward,
+				"episode_loss": acc_loss / max(steps, 1),
+				"avg_loss_10": avg_loss,
+				"success_rate_10": success_rate,
+				"epsilon": agent.epsilon,
+				"steps": steps,
+				"buffer_size": len(agent.memory)
+			})
+	
+	if use_wandb:
+		wandb.finish()
+	
 	return rewards, losses

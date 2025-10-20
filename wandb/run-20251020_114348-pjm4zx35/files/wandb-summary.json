@@ -1,0 +1,1 @@
+{"_step":7,"_runtime":1,"avg_reward":10.875,"rollout":8,"entropy":15.956510305404663,"rollout_reward":15,"rollout_length":208,"_timestamp":1.7609498309990551e+09,"_wandb":{"runtime":1},"total_steps":2000,"policy_loss":-0.41877020336687565,"value_loss":0.17838130285963416}
